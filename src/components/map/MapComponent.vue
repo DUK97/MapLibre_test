@@ -1,20 +1,24 @@
 <template>
   <div class="map-wrap">
-
+    <copyright-logo></copyright-logo>
     <div class="map" ref="mapContainer"></div>
-
+    <changeLocationButton  class="button"  >click me</changeLocationButton>
   </div>
 </template>
 
 <script>
 import {Map} from 'maplibre-gl';
 import {shallowRef, onMounted, onUnmounted, markRaw} from 'vue';
-
+import changeLocationButton from "@/components/utility/ChangeLocationButton";
+import CopyrightLogo from "@/components/utility/CopyrightLogo";
 
 export default {
   // eslint-disable-next-line vue/multi-word-component-names
   name: "MapComponent",
-
+  components: {
+    CopyrightLogo,
+    changeLocationButton
+  },
 
   setup() {
     const map = shallowRef(null);
