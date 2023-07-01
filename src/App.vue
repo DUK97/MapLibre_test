@@ -1,27 +1,26 @@
 <template>
-  <mgl-map 
-    mapStyle="https://api.maptiler.com/maps/streets/style.json?key=YOUR_MAPTILER_API_KEY_HERE"
-    :zoom=14
-    :center="[16.62662018, 49.2125578]"
-  >
-    <mgl-navigation-control position="top-left"/>
-  </mgl-map>
+  <Map>
+
+
+  </Map>
+
 </template>
 
 <script>
-import { MglMap, MglNavigationControl } from 'vue-maplibre-gl'
-
+import Map from "@/components/map/MapComponent";
 export default {
   name: 'App',
   components: {
-    MglMap,
-    MglNavigationControl
+    Map,
   }
 }
 </script>
 
 <style lang="scss">
 @import "~vue-maplibre-gl/src/css/maplibre.scss";
+
+
+
 
 body {
   margin: 0;
