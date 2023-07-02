@@ -1,8 +1,9 @@
 <template>
   <div class="layers">
-    <form class="layers__form" action="#">
-      <label class="layers__label" v-for="layer in layers" :key="layer.name">{{ layer.name }}
-        <input @change="handleLayerChange($event)" class="layers__input" :name="layer.name" type="checkbox">
+    <form action="#" class="layers__form">
+      <label v-for="layer in layers" :key="layer.name" class="layers__label">{{ layer.name }}
+        <input v-model="checkedLayers" :value="layer.name" class="layers__input" name="enabledLayers"
+               type="checkbox" @change="handleLayerChange">
       </label>
     </form>
   </div>
@@ -10,17 +11,23 @@
 
 <script>
 import {useLayersStore} from "@/stores/layers";
+import {ref, watch} from "vue";
 
 
 export default {
   emits: ['changeLayer'],
   name: "LayersList",
   setup(props, context) {
+    const checkedLayers = ref(JSON.parse(localStorage.getItem('checkedLayers')) || []);
     const {layers} = useLayersStore()
     const handleLayerChange = function ({target}) {
-      context.emit('changeLayer', ({name: target.name, isChecked: target.checked}))
+      context.emit('changeLayer', ({name: target.value, isChecked: target.checked}))
     }
-    return {layers, handleLayerChange}
+    watch(checkedLayers, to => {
+          localStorage.setItem('checkedLayers', JSON.stringify(to))
+        },
+        {deep: true})
+    return {layers, handleLayerChange, checkedLayers}
   }
 }
 </script>
