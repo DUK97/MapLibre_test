@@ -1,7 +1,7 @@
 <template>
-  <div class="map-wrap" :class={overlay:isLoading}>
+  <div :class={overlay:isLoading} class="map-wrap">
     <copyright-logo></copyright-logo>
-    <div class="map" ref="mapContainer"></div>
+    <div ref="mapContainer" class="map"></div>
     <location-buttons-list @changeMapLocation="handleNewLocation($event)"/>
     <layersList @changeLayer='changeLayerHandle'/>
     <loader-component :isLoading="isLoading"/>
@@ -10,7 +10,7 @@
 
 <script>
 import {Map} from 'maplibre-gl';
-import {shallowRef, onMounted, onUnmounted, markRaw} from 'vue';
+import {markRaw, onMounted, onUnmounted, shallowRef} from 'vue';
 import CopyrightLogo from "@/components/utility/CopyrightLogo";
 import locationButtonsList from "@/components/map/navigation/LocationButtonsList";
 import layersList from "@/components/map/navigation/LayersList";
@@ -29,10 +29,9 @@ export default {
   },
 
   setup() {
-
+    const map = shallowRef(null);
     const {getPinballMachines} = usePinballPointsStore();
     const {getSensors} = useSensorsPointsStore();
-    const map = shallowRef(null);
     const mapContainer = shallowRef(null);
     const isLoading = shallowRef(false);
     const handleNewLocation = function (newLocation) {
@@ -46,6 +45,7 @@ export default {
             const mapPoints = await getPinballMachines();
             addNewLayer('pinball', mapPoints);
           } else {
+            map.value.removeLayer('pinball-label');
             map.value.removeLayer('pinball');
             map.value.removeSource('pinball');
           }
@@ -53,9 +53,9 @@ export default {
         if (name === 'Sensors') {
           if (isChecked === true) {
             const mapPoints = await getSensors();
-            console.log(mapPoints)
             addNewLayer('sensors', mapPoints);
           } else {
+            map.value.removeLayer('sensors-label');
             map.value.removeLayer('sensors');
             map.value.removeSource('sensors');
           }
@@ -73,8 +73,6 @@ export default {
         renderMapLayer(map.value, mapSourceId, pointsLocation);
       } catch (error) {
         console.error(error)
-      } finally {
-        isLoading.value = false;
       }
 
     }
@@ -86,6 +84,15 @@ export default {
         center: [initialState.lng, initialState.lat],
         zoom: initialState.zoom
       }));
+      map.value.on('load', () => {
+
+        if (localStorage.getItem('checkedLayers').length !== 0) {
+          const localStorageItems = JSON.parse(localStorage.getItem('checkedLayers'))
+          localStorageItems.forEach(item => {
+            changeLayerHandle({name: item, isChecked: true});
+          })
+        }
+      })
     })
     onUnmounted(() => {
       map.value?.remove();
