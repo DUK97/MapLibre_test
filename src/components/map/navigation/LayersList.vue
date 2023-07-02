@@ -2,7 +2,7 @@
   <div class="layers">
     <form class="layers__form" action="#">
       <label class="layers__label" v-for="layer in layers" :key="layer.name">{{ layer.name }}
-        <input class="layers__input" :name="layer.name" type="checkbox">
+        <input @change="handleLayerChange($event)" class="layers__input" :name="layer.name" type="checkbox">
       </label>
     </form>
   </div>
@@ -13,10 +13,14 @@ import {useLayersStore} from "@/stores/layers";
 
 
 export default {
+  emits: ['changeLayer'],
   name: "LayersList",
-  setup() {
+  setup(props, context) {
     const {layers} = useLayersStore()
-    return {layers}
+    const handleLayerChange = function ({target}) {
+      context.emit('changeLayer', ({name: target.name, isChecked: target.checked}))
+    }
+    return {layers, handleLayerChange}
   }
 }
 </script>
