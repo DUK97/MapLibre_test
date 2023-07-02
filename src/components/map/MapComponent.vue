@@ -2,44 +2,47 @@
   <div class="map-wrap">
     <copyright-logo></copyright-logo>
     <div class="map" ref="mapContainer"></div>
-    <changeLocationButton  class="button"  >click me</changeLocationButton>
+    <location-buttons-list @changeMapLocation="handleNewLocation($event)" :locations="locations"/>
   </div>
 </template>
 
 <script>
 import {Map} from 'maplibre-gl';
 import {shallowRef, onMounted, onUnmounted, markRaw} from 'vue';
-import changeLocationButton from "@/components/utility/ChangeLocationButton";
 import CopyrightLogo from "@/components/utility/CopyrightLogo";
+import locationButtonsList from "@/components/map/navigation/LocationButtonsList";
+import {useLocationsStore} from "@/stores/locations";
 
 export default {
-  // eslint-disable-next-line vue/multi-word-component-names
   name: "MapComponent",
   components: {
     CopyrightLogo,
-    changeLocationButton
+    locationButtonsList,
   },
 
   setup() {
+    const {locations} = useLocationsStore();
     const map = shallowRef(null);
     const mapContainer = shallowRef(null);
+    const handleNewLocation = function (newLocation) {
+      map.value.flyTo({center: [newLocation.lng, newLocation.lat], zoom: newLocation.zoom})
+    };
     onMounted(() => {
       const initialState = {lng: 37.6879762, lat: 55.7523148, zoom: 10};
       map.value = markRaw(new Map({
         container: mapContainer.value,
-        style: `https://gist.githubusercontent.com/smellman/d3cbc19d134d5283df73/raw/a4bb13b44c36e9225f95c545cdedbe7513200d70/osm_mapbox_gl_example.json`,
+        style: process.env.VUE_APP_MAP_STYLE,
         center: [initialState.lng, initialState.lat],
         zoom: initialState.zoom
       }));
-
-
-    }),
+    })
         onUnmounted(() => {
           map.value?.remove();
         })
 
+
     return {
-      map, mapContainer
+      map, mapContainer, locations, handleNewLocation
     };
   }
 };
@@ -50,12 +53,13 @@ export default {
 @import '~maplibre-gl/dist/maplibre-gl.css';
 
 
-button{
+button {
   background-color: black;
   color: wheat;
   position: absolute;
   top: 50%;
 }
+
 .map-wrap {
   position: relative;
   width: 100%;
