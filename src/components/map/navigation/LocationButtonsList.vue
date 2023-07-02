@@ -8,27 +8,24 @@
 </template>
 
 <script>
-import changeLocationButton from "@/components/utility/ChangeLocationButton";
+import changeLocationButton from "@/components/map/navigation/ChangeLocationButton";
+import {useLocationsStore} from "@/stores/locations";
 
 
 export default {
 
   name: "LocationButtonsList",
   emits: ['changeMapLocation'],
-  props:{
-    locations:{
-      type:Object,
-      required:true,
-    }
-  },
+
   components: {
     changeLocationButton
   },
   setup(props, context) {
+  const {locations} =  useLocationsStore()
     const changeMapLocation = function (newLocation){
       context.emit('changeMapLocation', newLocation)
     }
-    return{changeMapLocation}
+    return{changeMapLocation,locations}
   },
 
 }
