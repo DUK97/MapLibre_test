@@ -2,7 +2,8 @@
   <div class="map-wrap">
     <copyright-logo></copyright-logo>
     <div class="map" ref="mapContainer"></div>
-    <location-buttons-list @changeMapLocation="handleNewLocation($event)" :locations="locations"/>
+    <location-buttons-list @changeMapLocation="handleNewLocation($event)"/>
+    <layersList @changeLayer='changeLayerHandle'/>
   </div>
 </template>
 
@@ -11,24 +12,66 @@ import {Map} from 'maplibre-gl';
 import {shallowRef, onMounted, onUnmounted, markRaw} from 'vue';
 import CopyrightLogo from "@/components/utility/CopyrightLogo";
 import locationButtonsList from "@/components/map/navigation/LocationButtonsList";
-import {useLocationsStore} from "@/stores/locations";
+import layersList from "@/components/map/navigation/LayersList";
+import {useSensorsPointsStore} from "@/stores/sensorPoints";
+import {usePinballPointsStore} from "@/stores/pinballPoints";
+import {renderMapLayer} from "@/utility/layersHandler";
 
 export default {
   name: "MapComponent",
   components: {
     CopyrightLogo,
     locationButtonsList,
+    layersList,
   },
 
   setup() {
-    const {locations} = useLocationsStore();
+
+    const {getPinballMachines} = usePinballPointsStore();
+    const {getSensors} = useSensorsPointsStore();
     const map = shallowRef(null);
     const mapContainer = shallowRef(null);
     const handleNewLocation = function (newLocation) {
       map.value.flyTo({center: [newLocation.lng, newLocation.lat], zoom: newLocation.zoom})
     };
-    onMounted(() => {
-      const initialState = {lng: 37.6879762, lat: 55.7523148, zoom: 10};
+    const isLoading = shallowRef(false);
+
+    const changeLayerHandle = async function ({name, isChecked}) {
+      if (name === 'Pinball machines' ) {
+        if (isChecked === true) {
+          const mapPoints = await getPinballMachines();
+          addNewLayer('pinball', mapPoints);
+        }
+        else {
+          map.value.removeLayer('pinball');
+          map.value.removeSource('pinball');
+        }
+      }
+      if (name === 'Sensors') {
+        if (isChecked === true) {
+          const mapPoints = await getSensors();
+          console.log(mapPoints)
+          addNewLayer('sensors', mapPoints);
+        }
+        else {
+          map.value.removeLayer('sensors');
+          map.value.removeSource('sensors');
+        }
+      }
+    }
+    const addNewLayer = function (mapSourceId, pointsLocation) {
+      isLoading.value = true;
+      try {
+        renderMapLayer(map.value, mapSourceId, pointsLocation);
+      } catch (error) {
+        console.error(error)
+      } finally {
+        isLoading.value = false;
+      }
+
+    }
+    onMounted(async () => {
+      const initialState = {lng: -122.8192068, lat: 45.5428359, zoom: 4};
       map.value = markRaw(new Map({
         container: mapContainer.value,
         style: process.env.VUE_APP_MAP_STYLE,
@@ -36,13 +79,13 @@ export default {
         zoom: initialState.zoom
       }));
     })
-        onUnmounted(() => {
-          map.value?.remove();
-        })
+    onUnmounted(() => {
+      map.value?.remove();
+    })
 
 
     return {
-      map, mapContainer, locations, handleNewLocation
+      map, mapContainer, handleNewLocation, changeLayerHandle, addNewLayer
     };
   }
 };
