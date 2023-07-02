@@ -1,6 +1,6 @@
 /**
  *
- * @param {Array} JSON - regularJSON
+ * @param {Object} JSON - regularJSON
  * @return {Object} geoJSON - regularJSON converted to GeoJSON
  *
  */
@@ -15,7 +15,7 @@ function convertJSONToGeoJSON(JSON) {
             "type": "Feature",
             "geometry": {
                 "type": "Point",
-                "coordinates": object.locations.coordinates,
+                "coordinates": [object.lon,object.lat],
             },
             "properties": {
                 "id": object["id"],
@@ -23,7 +23,6 @@ function convertJSONToGeoJSON(JSON) {
             }
         })
     })
-
 
     return geoJSON
 }
