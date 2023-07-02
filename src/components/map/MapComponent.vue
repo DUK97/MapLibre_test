@@ -1,9 +1,10 @@
 <template>
-  <div class="map-wrap">
+  <div class="map-wrap" :class={overlay:isLoading}>
     <copyright-logo></copyright-logo>
     <div class="map" ref="mapContainer"></div>
     <location-buttons-list @changeMapLocation="handleNewLocation($event)"/>
     <layersList @changeLayer='changeLayerHandle'/>
+    <loader-component :isLoading="isLoading"/>
   </div>
 </template>
 
@@ -16,10 +17,12 @@ import layersList from "@/components/map/navigation/LayersList";
 import {useSensorsPointsStore} from "@/stores/sensorPoints";
 import {usePinballPointsStore} from "@/stores/pinballPoints";
 import {renderMapLayer} from "@/utility/layersHandler";
+import LoaderComponent from "@/components/utility/LoaderComponent";
 
 export default {
   name: "MapComponent",
   components: {
+    LoaderComponent,
     CopyrightLogo,
     locationButtonsList,
     layersList,
@@ -31,36 +34,41 @@ export default {
     const {getSensors} = useSensorsPointsStore();
     const map = shallowRef(null);
     const mapContainer = shallowRef(null);
+    const isLoading = shallowRef(false);
     const handleNewLocation = function (newLocation) {
       map.value.flyTo({center: [newLocation.lng, newLocation.lat], zoom: newLocation.zoom})
     };
-    const isLoading = shallowRef(false);
-
     const changeLayerHandle = async function ({name, isChecked}) {
-      if (name === 'Pinball machines' ) {
-        if (isChecked === true) {
-          const mapPoints = await getPinballMachines();
-          addNewLayer('pinball', mapPoints);
+      isLoading.value = true
+      try {
+        if (name === 'Pinball machines') {
+          if (isChecked === true) {
+            const mapPoints = await getPinballMachines();
+            addNewLayer('pinball', mapPoints);
+          } else {
+            map.value.removeLayer('pinball');
+            map.value.removeSource('pinball');
+          }
         }
-        else {
-          map.value.removeLayer('pinball');
-          map.value.removeSource('pinball');
+        if (name === 'Sensors') {
+          if (isChecked === true) {
+            const mapPoints = await getSensors();
+            console.log(mapPoints)
+            addNewLayer('sensors', mapPoints);
+          } else {
+            map.value.removeLayer('sensors');
+            map.value.removeSource('sensors');
+          }
         }
+      } catch (error) {
+        console.error(error)
+      } finally {
+        isLoading.value = false
       }
-      if (name === 'Sensors') {
-        if (isChecked === true) {
-          const mapPoints = await getSensors();
-          console.log(mapPoints)
-          addNewLayer('sensors', mapPoints);
-        }
-        else {
-          map.value.removeLayer('sensors');
-          map.value.removeSource('sensors');
-        }
-      }
+
     }
     const addNewLayer = function (mapSourceId, pointsLocation) {
-      isLoading.value = true;
+
       try {
         renderMapLayer(map.value, mapSourceId, pointsLocation);
       } catch (error) {
@@ -85,14 +93,14 @@ export default {
 
 
     return {
-      map, mapContainer, handleNewLocation, changeLayerHandle, addNewLayer
+      map, mapContainer, handleNewLocation, changeLayerHandle, addNewLayer, isLoading
     };
   }
 };
 </script>
 
 
-<style scoped>
+<style lang="scss" scoped>
 @import '~maplibre-gl/dist/maplibre-gl.css';
 
 
@@ -106,14 +114,21 @@ button {
 .map-wrap {
   position: relative;
   width: 100%;
-  height: calc(100vh);
+  height: 100vh;
+
+  &.overlay {
+    pointer-events: none;
+    user-select: none;
+  }
 }
 
 .map {
   position: absolute;
   width: 100%;
   height: 100%;
+
 }
+
 
 .watermark {
   position: absolute;
