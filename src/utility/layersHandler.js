@@ -38,6 +38,18 @@ export const renderMapLayer = function (mapInstance, mapSourceId, pointsLocation
         popup.setLngLat(coordinates).setHTML(description).addTo(mapInstance);
     });
 
+    mapInstance.addLayer({
+        'id': `${mapSourceId}-label`,
+        'type': 'symbol',
+        'source': mapSourceId,
+        'layout': {
+            'text-field': ['get','name'] ,
+            'text-variable-anchor': ['top', 'bottom'],
+            'text-radial-offset': 0.5,
+            'text-justify': 'auto',
+        }
+    });
+
     mapInstance.on('mouseleave', mapSourceId, function () {
         mapInstance.getCanvas().style.cursor = '';
         popup.remove();
